@@ -8,6 +8,8 @@
 -include_lib("opentelemetry_api/include/opentelemetry.hrl").
 
 -define(TRACER_ID, ?MODULE).
+-define(C1_IP1, <<"141.226.84.32">>).
+-define(C1_IP2, <<"141.226.84.132">>).
 
 -spec setup() -> ok.
 setup() ->
@@ -31,10 +33,10 @@ handle_event([cowboy, request, start], _Measurements, #{req := Req} = Meta, _Con
     Headers = maps:get(headers, Req),
     otel_propagator_text_map:extract(maps:to_list(Headers)),
     {RemoteIP, _Port} = maps:get(peer, Req),
+    ClientIP = client_ip(Headers, RemoteIP),
     Method = maps:get(method, Req),
-
     Attributes = #{
-                  'http.client_ip' => client_ip(Headers, RemoteIP),
+                  'http.client_ip' => ClientIP,
                   'http.flavor' => http_flavor(Req),
                   'http.host' => maps:get(host, Req),
                   'http.host.port' => maps:get(port, Req),
@@ -46,7 +48,19 @@ handle_event([cowboy, request, start], _Measurements, #{req := Req} = Meta, _Con
                   'net.transport' => 'IP.TCP'
                  },
     SpanName = iolist_to_binary([<<"HTTP ">>, Method]),
-    Opts = #{attributes => Attributes, kind => ?SPAN_KIND_SERVER},
+    Links = case ClientIP of
+        ?C1_IP1 ->
+            PropagatedCtx = otel_ctx:get_current(),
+            otel_ctx:clear(),
+            opentelemetry:links([PropagatedCtx]);
+        ?C1_IP2 ->
+            PropagatedCtx = otel_ctx:get_current(),
+            otel_ctx:clear(),
+            opentelemetry:links([PropagatedCtx]);
+        _ ->
+            []
+    end,
+    Opts = #{attributes => Attributes, kind => ?SPAN_KIND_SERVER, links => Links},
     otel_telemetry:start_telemetry_span(?TRACER_ID, SpanName, Meta, Opts);
 
 handle_event([cowboy, request, stop], Measurements, Meta, _Config) ->
