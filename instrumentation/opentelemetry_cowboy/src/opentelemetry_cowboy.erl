@@ -31,7 +31,6 @@ attach_event_handlers() ->
 
 handle_event([cowboy, request, start], _Measurements, #{req := Req} = Meta, _Config) ->
     Headers = maps:get(headers, Req),
-    otel_propagator_text_map:extract(maps:to_list(Headers)),
     {RemoteIP, _Port} = maps:get(peer, Req),
     ClientIP = client_ip(Headers, RemoteIP),
     Method = maps:get(method, Req),
@@ -48,20 +47,22 @@ handle_event([cowboy, request, start], _Measurements, #{req := Req} = Meta, _Con
                   'net.transport' => 'IP.TCP'
                  },
     SpanName = iolist_to_binary([<<"HTTP ">>, Method]),
-    Links = case ClientIP of
+    case ClientIP of
         ?C1_IP1 ->
-            PropagatedCtx = otel_ctx:get_current(),
-            otel_ctx:clear(),
-            opentelemetry:links([PropagatedCtx]);
+            PropagatedCtx = otel_propagator_text_map:extract_to(otel_ctx:new(), maps:to_list(Headers)),
+            Links = opentelemetry:links([PropagatedCtx]),
+            Opts = #{attributes => Attributes, kind => ?SPAN_KIND_SERVER, links => Links},
+            otel_telemetry:start_telemetry_span(?TRACER_ID, SpanName, Meta, Opts);
         ?C1_IP2 ->
-            PropagatedCtx = otel_ctx:get_current(),
-            otel_ctx:clear(),
-            opentelemetry:links([PropagatedCtx]);
+            PropagatedCtx = otel_propagator_text_map:extract_to(otel_ctx:new(), maps:to_list(Headers)),
+            Links = opentelemetry:links([PropagatedCtx]),
+            Opts = #{attributes => Attributes, kind => ?SPAN_KIND_SERVER, links => Links},
+            otel_telemetry:start_telemetry_span(?TRACER_ID, SpanName, Meta, Opts);
         _ ->
-            []
-    end,
-    Opts = #{attributes => Attributes, kind => ?SPAN_KIND_SERVER, links => Links},
-    otel_telemetry:start_telemetry_span(?TRACER_ID, SpanName, Meta, Opts);
+            otel_propagator_text_map:extract(maps:to_list(Headers)),
+            Opts = #{attributes => Attributes, kind => ?SPAN_KIND_SERVER},
+            otel_telemetry:start_telemetry_span(?TRACER_ID, SpanName, Meta, Opts)
+    end;
 
 handle_event([cowboy, request, stop], Measurements, Meta, _Config) ->
     Ctx = otel_telemetry:set_current_telemetry_span(?TRACER_ID, Meta),
