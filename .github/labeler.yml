@@ -1,4 +1,5 @@
 elixir:
+  - .github/elixir-test-matrix.json
   - instrumentation/**/*.ex
   - instrumentation/**/*.exs
   - instrumentation/**/mix.lock
@@ -16,6 +17,7 @@ elixir:
   - utilities/**/mix.lock
 
 erlang:
+  - .github/erlang-test-matrix.json
   - instrumentation/**/*.erl
   - instrumentation/**/*.hrl
   - instrumentation/**/rebar.*
@@ -47,11 +49,32 @@ utilities:
 scope-ci:
   - .github/workflows/**
 
+opentelemetry_aws_xray:
+  - utilities/opentelemetry_aws_xray/**/*
+
 opentelemetry_cowboy:
   - instrumentation/opentelemetry_cowboy/**/*
 
+opentelemetry_dataloader:
+  - instrumentation/opentelemetry_dataloader/**/*
+
 opentelemetry_ecto:
   - instrumentation/opentelemetry_ecto/**/*
+
+opentelemetry_elli:
+  - instrumentation/opentelemetry_elli/**/*
+
+opentelemetry_finch:
+  - instrumentation/opentelemetry_finch/**/*
+
+opentelemetry_grpcbox:
+  - instrumentation/opentelemetry_grpcbox/**/*
+
+opentelemetry_httpoison:
+  - instrumentation/opentelemetry_httpoison/**/*
+
+opentelemetry_instrumentation_http:
+  - utilities/opentelemetry_instrumentation_http/**/*
 
 opentelemetry_nebulex:
   - instrumentation/opentelemetry_nebulex/**/*
@@ -62,6 +85,9 @@ opentelemetry_oban:
 opentelemetry_phoenix:
   - instrumentation/opentelemetry_phoenix/**/*
 
+opentelemetry_bandit:
+  - instrumentation/opentelemetry_bandit/**/*
+
 opentelemetry_process_propagator:
   - propagators/opentelemetry_process_propagator/**/*
 
@@ -71,17 +97,8 @@ opentelemetry_redix:
 opentelemetry_req:
   - instrumentation/opentelemetry_req/**/*
 
-opentelemetry_finch:
-  - instrumentation/opentelemetry_finch/**/*
-
 opentelemetry_telemetry:
   - utilities/opentelemetry_telemetry/**/*
 
 opentelemetry_tesla:
   - instrumentation/opentelemetry_tesla/**/*
-
-opentelemetry_xray:
-  - utilities/opentelemetry_xray/**/*
-
-opentelemetry_instrumentation_http:
-  - utilities/opentelemetry_instrumentation_http/**/*
